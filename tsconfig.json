@@ -19,8 +19,13 @@
       "dom"
     ]
   },
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ],
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
+    "disableTypeScriptVersionCheck": true,
     "strictInjectionParameters": true
   }
 }
