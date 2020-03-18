@@ -22,8 +22,10 @@
     "@angular/platform-browser": "~9.0.6",
     "@angular/platform-browser-dynamic": "~9.0.6",
     "@angular/router": "~9.0.6",
+    "@types/webaudioapi": "0.0.27",
     "rxjs": "~6.5.4",
     "tslib": "^1.10.0",
+    "web-audio-analyser": "^2.0.1",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {
