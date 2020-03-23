@@ -1,20 +1,35 @@
 const AudioContext = window['AudioContext'] || window['webkitAudioContext'];
 
-class SburdoModulo {
-    ctx: any;
-    analyser: any;
+export interface FluctusModuloInterface {
+    ctx: AudioContext;
+    analyser: AnalyserNode | Array<AnalyserNode>;
     stereo: boolean;
     audible: boolean;
-    wavedata: any;
+    wavedata: Uint8Array | null;
     freqdata: any;
-    splitter: any;
-    merger: any;
-    source: any;
-    output: any;
+    splitter: ChannelSplitterNode | null;
+    merger: ChannelMergerNode | null;
+    source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode;
+    output: ChannelMergerNode;
+    waveform(output?: Uint8Array, channel?: number): Uint8Array;
+    frequencies(output?: Uint8Array, channel?: number): Uint8Array;
+}
 
-    constructor(audio: HTMLAudioElement | AudioNode | MediaStream, ctx?: AudioContext | any, opts?: {stereo?: any; audible?: any; }) {
-        if (!(this instanceof SburdoModulo)) {
-            return new SburdoModulo(audio, ctx, opts);
+class NgModulo implements FluctusModuloInterface {
+    ctx: AudioContext;
+    analyser: AnalyserNode | Array<AnalyserNode>;
+    stereo: boolean;
+    audible: boolean;
+    wavedata: Uint8Array | null;
+    freqdata: any;
+    splitter: ChannelSplitterNode | null;
+    merger: ChannelMergerNode | null;
+    source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode;
+    output: ChannelMergerNode;
+
+    constructor(audio: HTMLAudioElement | AudioNode | MediaStream | MediaElementAudioSourceNode | MediaStreamAudioSourceNode, ctx?: AudioContext | any, opts?: {stereo?: boolean; audible?: boolean; }) {
+        if (!(this instanceof NgModulo)) {
+            return new NgModulo(audio, ctx, opts);
         }
 
         if (!(ctx instanceof AudioContext)) {
@@ -26,11 +41,50 @@ class SburdoModulo {
 
         if (!(audio instanceof AudioNode)) {
             audio =
-                audio instanceof Audio || audio instanceof HTMLAudioElement
+                (audio instanceof Audio || audio instanceof HTMLAudioElement)
                     ? ctx.createMediaElementSource(audio)
                     : ctx.createMediaStreamSource(audio);
         }
 
+        this.audioConfigStateResolver(ctx, opts, audio);
+        this.audioConfigStateParser(ctx);
+    }
+
+    public waveform(output?: Uint8Array, channel?: number): Uint8Array {
+        if (!output) {
+            output =
+                this.wavedata ||
+                (this.wavedata = new Uint8Array((this.analyser[0] || this.analyser).frequencyBinCount));
+        }
+
+        const analyser =
+            this.stereo
+                ? this.analyser[channel || 0]
+                : this.analyser;
+
+        analyser.getByteTimeDomainData(output);
+
+        return output;
+    }
+
+    public frequencies(output?: Uint8Array, channel?: number): Uint8Array {
+        if (!output) {
+            output =
+                this.freqdata
+                || (this.freqdata = new Uint8Array((this.analyser[0] || this.analyser).frequencyBinCount));
+        }
+
+        const analyser =
+            this.stereo
+                ? this.analyser[channel || 0]
+                : this.analyser;
+
+        analyser.getByteFrequencyData(output);
+
+        return output;
+    }
+
+    private audioConfigStateResolver(ctx: AudioContext, opts: {stereo?: boolean; audible?: boolean; }, audio: MediaElementAudioSourceNode | any): void {
         this.analyser = ctx.createAnalyser();
         this.stereo = !!opts.stereo;
         this.audible = opts.audible !== false;
@@ -39,20 +93,26 @@ class SburdoModulo {
         this.splitter = null;
         this.merger = null;
         this.source = audio;
+    }
 
+    private audioConfigStateParser(ctx: AudioContext) {
         if (!this.stereo) {
             this.output = this.source;
-            this.source.connect(this.analyser);
+
+            this.source.connect((this.analyser[0] || this.analyser));
 
             if (this.audible) {
-                this.analyser.connect(ctx.destination);
+                (this.analyser[0] || this.analyser).connect(ctx.destination);
             }
         } else {
-            this.analyser = [this.analyser];
+            this.analyser = [(this.analyser[0] || this.analyser)];
+
             this.analyser.push(ctx.createAnalyser());
+
             this.splitter = ctx.createChannelSplitter(2);
             this.merger = ctx.createChannelMerger(2);
             this.output = this.merger;
+
             this.source.connect(this.splitter);
 
             for (let i = 0; i < 2; i++) {
@@ -65,32 +125,6 @@ class SburdoModulo {
             }
         }
     }
-
-    waveform(output: any, channel: any) {
-        if (!output) {
-            output =
-                this.wavedata ||
-                (this.wavedata = new Uint8Array((this.analyser[0] || this.analyser).frequencyBinCount));
-        }
-
-        const analyser = this.stereo ? this.analyser[channel || 0] : this.analyser;
-
-        analyser.getByteTimeDomainData(output);
-
-        return output;
-    }
-
-    frequencies({output, channel}: {output: any; channel: any; }) {
-        if (!output) {
-            output =
-                this.freqdata ||
-                (this.freqdata = new Uint8Array((this.analyser[0] || this.analyser).frequencyBinCount));
-        }
-
-        const analyser = this.stereo ? this.analyser[channel || 0] : this.analyser;
-        analyser.getByteFrequencyData(output);
-        return output;
-    }
 }
 
-export default SburdoModulo;
+export default NgModulo;

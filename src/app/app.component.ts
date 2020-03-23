@@ -1,5 +1,5 @@
 import {Component, ViewChild, ElementRef} from '@angular/core';
-import SburdoModulo from './test-modulo/sburdo-modulo';
+import NgModulo from './test-modulo/sburdo-modulo';
 
 @Component({
     selector: 'fl-root',
@@ -7,7 +7,7 @@ import SburdoModulo from './test-modulo/sburdo-modulo';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    private _audioAnalyser: any;
+    private _audioAnalyser: NgModulo;
     private _ctx: CanvasRenderingContext2D;
 
     public isWaveShown = false;
@@ -26,14 +26,9 @@ export class AppComponent {
     }
 
     public handleFileUpload(event: any) {
-        console.log(event.target.files);
-
         this.audioSource.nativeElement.src = URL.createObjectURL(event.target.files[0]);
 
-        console.log(this.audioSource.nativeElement.src);
-
         this.audioSource.nativeElement.play();
-
         this.startVisualizer();
 
         this.isWaveShown = true;
@@ -41,14 +36,13 @@ export class AppComponent {
 
     public playDemo() {
         this.audioSource.nativeElement.play();
-
         this.startVisualizer();
 
         this.isWaveShown = true;
     }
 
     public startVisualizer() {
-        this._audioAnalyser = new SburdoModulo(this.audioSource.nativeElement);
+        this._audioAnalyser = new NgModulo(this.audioSource.nativeElement);
         this._ctx = this.waveCanvas.nativeElement.getContext('2d');
         this.waveCanvas.nativeElement.width = window.innerWidth;
         this.waveCanvas.nativeElement.height = window.innerHeight;
@@ -65,7 +59,11 @@ export class AppComponent {
 
         // Clear canvas
         this._ctx.fillStyle = 'black';
-        this._ctx.fillRect(0, 0, this.waveCanvas.nativeElement.width, this.waveCanvas.nativeElement.height);
+        this._ctx.fillRect(
+            0, 0,
+            this.waveCanvas.nativeElement.width,
+            this.waveCanvas.nativeElement.height
+        );
 
         // Set line style
         const scaleFactor = 0.8;
@@ -75,7 +73,10 @@ export class AppComponent {
 
         // Draw frequency lines
         this._ctx.beginPath();
-        this._ctx.moveTo(0, this.waveCanvas.nativeElement.height / 2 - audioFreq[0] * scaleFactor);
+        this._ctx.moveTo(
+            0,
+            this.waveCanvas.nativeElement.height / 2 - audioFreq[0] * scaleFactor
+        );
 
         for (let i = 0; i < audioFreq.length; i++) {
             this._ctx.lineTo(
@@ -84,7 +85,10 @@ export class AppComponent {
             );
         }
 
-        this._ctx.moveTo(0, this.waveCanvas.nativeElement.height / 2 + audioFreq[0] * scaleFactor);
+        this._ctx.moveTo(
+            0,
+            this.waveCanvas.nativeElement.height / 2 + audioFreq[0] * scaleFactor
+        );
 
         for (let i = 0; i < audioFreq.length; i++) {
             this._ctx.lineTo(
