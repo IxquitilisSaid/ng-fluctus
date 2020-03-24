@@ -1,5 +1,5 @@
 import {Component, ViewChild, ElementRef} from '@angular/core';
-import NgModulo from './test-modulo/sburdo-modulo';
+import NgModulo from 'ng-modulo';
 
 @Component({
     selector: 'fl-root',
